@@ -57,6 +57,8 @@ if 'left_equation' not in st.session_state:
     st.session_state.left_points = []
     st.session_state.left_correct = False
     st.session_state.left_hint = None
+    st.session_state.left_message = None
+    st.session_state.left_message_type = None
 
 if 'right_equation' not in st.session_state:
     a = random.randint(-3, 3)
@@ -68,6 +70,8 @@ if 'right_equation' not in st.session_state:
     st.session_state.right_user_b = None
     st.session_state.right_correct = False
     st.session_state.right_hint = None
+    st.session_state.right_message = None
+    st.session_state.right_message_type = None
 
 # 방정식 표시 함수
 def format_equation(a, b):
@@ -423,6 +427,15 @@ with col1:
         p1, p2 = st.session_state.left_points
         st.success(f"점 1: ({p1['x']}, {p1['y']}), 점 2: ({p2['x']}, {p2['y']})")
     
+    # 메시지 표시
+    if st.session_state.left_message:
+        if st.session_state.left_message_type == 'success':
+            st.success(st.session_state.left_message)
+        elif st.session_state.left_message_type == 'error':
+            st.error(st.session_state.left_message)
+        elif st.session_state.left_message_type == 'info':
+            st.info(st.session_state.left_message)
+    
     # 버튼들
     col_btn1, col_btn2, col_btn3 = st.columns(3)
     
@@ -434,10 +447,8 @@ with col1:
                 st.session_state.left_equation
             )
             st.session_state.left_correct = is_correct
-            if is_correct:
-                st.success(message)
-            else:
-                st.error(message)
+            st.session_state.left_message = message
+            st.session_state.left_message_type = 'success' if is_correct else 'error'
             st.rerun()
     
     with col_btn2:
@@ -445,6 +456,7 @@ with col1:
         if st.button("💡 힌트 보기", disabled=hint_disabled, key="hint_left"):
             hint = get_hint_from_openai(st.session_state.left_equation)
             st.session_state.left_hint = hint
+            st.rerun()
     
     with col_btn3:
         if st.button("🔄 다시 시작", key="reset_left"):
@@ -456,6 +468,8 @@ with col1:
             st.session_state.left_points = []
             st.session_state.left_correct = False
             st.session_state.left_hint = None
+            st.session_state.left_message = None
+            st.session_state.left_message_type = None
             st.rerun()
     
     # 힌트 표시
@@ -489,6 +503,15 @@ with col2:
     with col_b:
         user_b = st.number_input("y절편 b =", value=0, min_value=-10, max_value=10, key="input_b")
     
+    # 메시지 표시
+    if st.session_state.right_message:
+        if st.session_state.right_message_type == 'success':
+            st.success(st.session_state.right_message)
+        elif st.session_state.right_message_type == 'error':
+            st.error(st.session_state.right_message)
+        elif st.session_state.right_message_type == 'info':
+            st.info(st.session_state.right_message)
+    
     # 버튼들
     col_btn4, col_btn5, col_btn6 = st.columns(3)
     
@@ -498,17 +521,20 @@ with col2:
                 st.session_state.right_correct = True
                 st.session_state.right_user_a = user_a
                 st.session_state.right_user_b = user_b
-                st.success("정답입니다! 🎉 잘하셨어요!")
+                st.session_state.right_message = "정답입니다! 🎉 잘하셨어요!"
+                st.session_state.right_message_type = 'success'
             else:
                 st.session_state.right_user_a = user_a
                 st.session_state.right_user_b = user_b
-                st.error("아직 정답이 아니에요. 힌트를 확인해보세요! 💪")
+                st.session_state.right_message = "아직 정답이 아니에요. 힌트를 확인해보세요! 💪"
+                st.session_state.right_message_type = 'error'
             st.rerun()
     
     with col_btn5:
         if st.button("💡 힌트 보기", disabled=st.session_state.right_correct, key="hint_right"):
             hint = get_hint_from_openai(st.session_state.right_equation, is_graph=True)
             st.session_state.right_hint = hint
+            st.rerun()
     
     with col_btn6:
         if st.button("🔄 다시 시작", key="reset_right"):
@@ -521,6 +547,8 @@ with col2:
             st.session_state.right_user_b = None
             st.session_state.right_correct = False
             st.session_state.right_hint = None
+            st.session_state.right_message = None
+            st.session_state.right_message_type = None
             st.rerun()
     
     # 힌트 표시
