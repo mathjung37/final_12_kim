@@ -141,7 +141,33 @@ def create_coordinate_plot(points=None, correct_line=None, show_correct=False):
         hoverinfo='skip'
     ))
     
-    # 클릭 가능한 격자점 추가는 제거 (Plotly 클릭 이벤트로 처리)
+    # 클릭 가능한 모든 정수 좌표점 추가 (투명한 마커)
+    if not show_correct:
+        grid_points_x = []
+        grid_points_y = []
+        grid_labels = []
+        for x in range(-6, 7):
+            for y in range(-6, 7):
+                grid_points_x.append(x)
+                grid_points_y.append(y)
+                grid_labels.append(f"({x}, {y})")
+        
+        fig.add_trace(go.Scatter(
+            x=grid_points_x,
+            y=grid_points_y,
+            mode='markers',
+            marker=dict(
+                size=40,  # 클릭 영역을 넓게
+                color='rgba(0,0,0,0)',  # 완전 투명
+                line=dict(width=0)
+            ),
+            showlegend=False,
+            hoverinfo='text',
+            text=grid_labels,
+            customdata=[[x, y] for x, y in zip(grid_points_x, grid_points_y)],
+            selected=dict(marker=dict(color='rgba(255,107,157,0.3)')),
+            unselected=dict(marker=dict(color='rgba(0,0,0,0)'))
+        ))
     
     # 사용자가 그린 직선
     if points and len(points) == 2:
@@ -208,7 +234,8 @@ def create_coordinate_plot(points=None, correct_line=None, show_correct=False):
         height=500,
         margin=dict(l=50, r=50, t=50, b=50),
         hovermode='closest',
-        dragmode=False  # 드래그 모드 비활성화
+        dragmode=False,  # 드래그 모드 비활성화
+        clickmode='event+select'  # 클릭 이벤트 활성화
     )
     
     return fig
@@ -413,7 +440,7 @@ with col1:
         show_correct=show_correct,
     )
     
-    # 그래프 표시 (모드바 제거, 확대/축소/이동 완전 비활성화)
+    # 그래프 표시 (모드바 제거, 확대/축소/이동 완전 비활성화, 클릭 이벤트 활성화)
     config = {
         'displayModeBar': False,  # 모드바 완전히 숨김
         'displaylogo': False,
@@ -421,21 +448,50 @@ with col1:
         'doubleClick': False,  # 더블클릭 리셋 비활성화
         'dragmode': False  # 드래그 모드 비활성화
     }
-    st.plotly_chart(
+    
+    # 클릭 이벤트 처리
+    event = st.plotly_chart(
         fig_left, 
         use_container_width=True, 
-        config=config
+        config=config,
+        key="plot_left_click",
+        on_select="rerun" if not show_correct else None
     )
+    
+    # 클릭된 좌표 처리
+    if event and 'selection' in event and not st.session_state.left_correct:
+        selection = event['selection']
+        if selection and 'points' in selection and selection['points']:
+            # 마지막으로 클릭된 점 처리
+            point = selection['points'][-1]
+            if 'customdata' in point and point['customdata']:
+                x, y = point['customdata']
+                x, y = int(x), int(y)
+                
+                # -6부터 6 범위 내인지 확인
+                if -6 <= x <= 6 and -6 <= y <= 6:
+                    point_dict = {'x': x, 'y': y}
+                    
+                    # 최대 2개의 점만 허용
+                    if len(st.session_state.left_points) < 2:
+                        # 중복 체크
+                        if point_dict not in st.session_state.left_points:
+                            st.session_state.left_points.append(point_dict)
+                            st.rerun()
+                    elif len(st.session_state.left_points) == 2:
+                        # 2개 점이 이미 있으면 첫 번째 점 교체
+                        st.session_state.left_points[0] = point_dict
+                        st.rerun()
     
     # 좌표 입력 안내
     if not st.session_state.left_correct:
         if len(st.session_state.left_points) == 0:
-            st.info("💡 **아래에서 정수 좌표를 입력**하여 두 개의 점을 찍어주세요!")
+            st.info("💡 **좌표평면을 클릭하거나 아래에서 정수 좌표를 입력**하여 두 개의 점을 찍어주세요!")
         elif len(st.session_state.left_points) == 1:
-            st.info("💡 **아래에서 정수 좌표를 입력**하여 점 하나 더 추가해주세요!")
+            st.info("💡 **좌표평면을 클릭하거나 아래에서 정수 좌표를 입력**하여 점 하나 더 추가해주세요!")
     
     # 좌표 입력
-    st.markdown("### 정수 좌표 입력")
+    st.markdown("### 정수 좌표 입력 (또는 위 좌표평면을 클릭하세요)")
     
     # 점 정보 표시 및 입력
     if len(st.session_state.left_points) == 0:
