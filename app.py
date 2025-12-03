@@ -190,7 +190,8 @@ def create_coordinate_plot(points=None, correct_line=None, show_correct=False):
             tickmode='linear',
             tick0=-6,
             dtick=1,
-            title='x'
+            title='x',
+            fixedrange=True  # x축 고정 (확대/축소/이동 방지)
         ),
         yaxis=dict(
             range=[-6.5, 6.5],
@@ -199,13 +200,15 @@ def create_coordinate_plot(points=None, correct_line=None, show_correct=False):
             tickmode='linear',
             tick0=-6,
             dtick=1,
-            title='y'
+            title='y',
+            fixedrange=True  # y축 고정 (확대/축소/이동 방지)
         ),
         plot_bgcolor='#FFF9F0',
         width=500,
         height=500,
         margin=dict(l=50, r=50, t=50, b=50),
-        hovermode='closest'
+        hovermode='closest',
+        dragmode=False  # 드래그 모드 비활성화
     )
     
     return fig
@@ -268,7 +271,8 @@ def create_graph_plot(equation):
             tickmode='linear',
             tick0=-6,
             dtick=1,
-            title='x'
+            title='x',
+            fixedrange=True  # x축 고정 (확대/축소/이동 방지)
         ),
         yaxis=dict(
             range=[-6.5, 6.5],
@@ -277,13 +281,15 @@ def create_graph_plot(equation):
             tickmode='linear',
             tick0=-6,
             dtick=1,
-            title='y'
+            title='y',
+            fixedrange=True  # y축 고정 (확대/축소/이동 방지)
         ),
         plot_bgcolor='#FFF9F0',
         width=500,
         height=500,
         margin=dict(l=50, r=50, t=50, b=50),
-        hovermode=False
+        hovermode=False,
+        dragmode=False  # 드래그 모드 비활성화
     )
     
     return fig
@@ -407,10 +413,13 @@ with col1:
         show_correct=show_correct,
     )
     
-    # 그래프 표시 (모드바 제거)
+    # 그래프 표시 (모드바 제거, 확대/축소/이동 완전 비활성화)
     config = {
         'displayModeBar': False,  # 모드바 완전히 숨김
-        'displaylogo': False
+        'displaylogo': False,
+        'scrollZoom': False,  # 스크롤 확대/축소 비활성화
+        'doubleClick': False,  # 더블클릭 리셋 비활성화
+        'dragmode': False  # 드래그 모드 비활성화
     }
     st.plotly_chart(
         fig_left, 
@@ -521,11 +530,14 @@ with col2:
     st.markdown(f"<div class='equation-text' style='text-align: center;'><h2 style='margin: 0;'>{eq_text}</h2></div>", unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
     
-    # 그래프 표시 (모드바 제거)
+    # 그래프 표시 (모드바 제거, 확대/축소/이동 완전 비활성화)
     fig_right = create_graph_plot(st.session_state.right_equation)
     config = {
         'displayModeBar': False,  # 모드바 완전히 숨김
-        'displaylogo': False
+        'displaylogo': False,
+        'scrollZoom': False,  # 스크롤 확대/축소 비활성화
+        'doubleClick': False,  # 더블클릭 리셋 비활성화
+        'dragmode': False  # 드래그 모드 비활성화
     }
     st.plotly_chart(fig_right, use_container_width=True, config=config)
     st.info("그래프를 보고 방정식을 찾아보세요!")
