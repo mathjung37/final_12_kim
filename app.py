@@ -102,7 +102,7 @@ def format_equation(a, b):
         return f"y = {a_display} {sign}{b}"
 
 # 좌표평면 그래프 생성 함수 (왼쪽 패널 - 사용자가 점 찍기)
-def create_coordinate_plot(points=None, correct_line=None, show_correct=False, clickable=True):
+def create_coordinate_plot(points=None, correct_line=None, show_correct=False):
     fig = go.Figure()
     
     # 그리드 배경
@@ -207,12 +207,6 @@ def create_coordinate_plot(points=None, correct_line=None, show_correct=False, c
         margin=dict(l=50, r=50, t=50, b=50),
         hovermode='closest'
     )
-    
-    # 클릭 가능하게 설정
-    if clickable and not show_correct:
-        fig.update_layout(
-            clickmode='event+select'
-        )
     
     return fig
 
@@ -411,80 +405,58 @@ with col1:
         points=points,
         correct_line=st.session_state.left_equation,
         show_correct=show_correct,
-        clickable=not show_correct
     )
     
-    # 그래프 표시 (클릭 가능)
-    event = st.plotly_chart(
+    # 그래프 표시 (모드바 제거)
+    config = {
+        'displayModeBar': False,  # 모드바 완전히 숨김
+        'displaylogo': False
+    }
+    st.plotly_chart(
         fig_left, 
         use_container_width=True, 
-        key="plot_left",
-        on_select="rerun" if not show_correct else None
+        config=config
     )
-    
-    # 클릭된 좌표 처리
-    if event and 'selection' in event and not st.session_state.left_correct:
-        selection = event['selection']
-        if selection and 'points' in selection and selection['points']:
-            # 마지막으로 클릭된 점 처리
-            point = selection['points'][-1]
-            x = round(point.get('x', 0))
-            y = round(point.get('y', 0))
-            
-            # -6부터 6 범위 내인지 확인
-            if -6 <= x <= 6 and -6 <= y <= 6:
-                point_dict = {'x': int(x), 'y': int(y)}
-                
-                # 최대 2개의 점만 허용
-                if len(st.session_state.left_points) < 2:
-                    # 중복 체크
-                    if point_dict not in st.session_state.left_points:
-                        st.session_state.left_points.append(point_dict)
-                        st.rerun()
-                elif len(st.session_state.left_points) == 2:
-                    # 2개 점이 이미 있으면 첫 번째 점 교체
-                    st.session_state.left_points[0] = point_dict
-                    st.rerun()
     
     # 좌표 입력 안내
     if not st.session_state.left_correct:
         if len(st.session_state.left_points) == 0:
-            st.info("💡 **좌표평면을 클릭하거나 아래에서 좌표를 입력**하여 두 개의 점을 찍어주세요!")
+            st.info("💡 **아래에서 정수 좌표를 입력**하여 두 개의 점을 찍어주세요!")
         elif len(st.session_state.left_points) == 1:
-            st.info("💡 **좌표평면을 클릭하거나 아래에서 좌표를 입력**하여 점 하나 더 추가해주세요!")
+            st.info("💡 **아래에서 정수 좌표를 입력**하여 점 하나 더 추가해주세요!")
     
     # 좌표 입력
-    st.markdown("### 좌표 입력 (또는 위 그래프를 클릭하세요)")
+    st.markdown("### 정수 좌표 입력")
     
-    # 점 정보 표시
+    # 점 정보 표시 및 입력
     if len(st.session_state.left_points) == 0:
-        st.info("좌표평면에 정수좌표로 두 개의 점을 입력해주세요!")
+        st.info("좌표평면에 정수 좌표로 두 개의 점을 입력해주세요! (x, y는 -6부터 6까지의 정수)")
         col_x, col_y = st.columns(2)
         with col_x:
             x = st.number_input("x 좌표", value=0, min_value=-6, max_value=6, step=1, key="left_x")
         with col_y:
             y = st.number_input("y 좌표", value=0, min_value=-6, max_value=6, step=1, key="left_y")
         
-        if st.button("점 1 추가하기", key="add_point1_left"):
+        if st.button("점 1 추가하기", key="add_point1_left", use_container_width=True):
             point = {'x': int(x), 'y': int(y)}
             st.session_state.left_points.append(point)
             st.rerun()
     elif len(st.session_state.left_points) == 1:
         p = st.session_state.left_points[0]
-        st.info(f"점 1: ({p['x']}, {p['y']}) - 정수좌표로 점 하나 더 입력해주세요!")
+        st.info(f"✅ 점 1: ({p['x']}, {p['y']}) - 정수 좌표로 점 하나 더 입력해주세요!")
         col_x, col_y = st.columns(2)
         with col_x:
             x = st.number_input("x 좌표", value=0, min_value=-6, max_value=6, step=1, key="left_x2")
         with col_y:
             y = st.number_input("y 좌표", value=0, min_value=-6, max_value=6, step=1, key="left_y2")
         
-        if st.button("점 2 추가하기", key="add_point2_left"):
+        if st.button("점 2 추가하기", key="add_point2_left", use_container_width=True):
             point = {'x': int(x), 'y': int(y)}
             st.session_state.left_points.append(point)
             st.rerun()
     else:
         p1, p2 = st.session_state.left_points
-        st.success(f"점 1: ({p1['x']}, {p1['y']}), 점 2: ({p2['x']}, {p2['y']})")
+        st.success(f"✅ 점 1: ({p1['x']}, {p1['y']}), 점 2: ({p2['x']}, {p2['y']}) - 이제 정답 확인 버튼을 눌러주세요!")
     
     # 메시지 표시
     if st.session_state.left_message:
@@ -549,9 +521,13 @@ with col2:
     st.markdown(f"<div class='equation-text' style='text-align: center;'><h2 style='margin: 0;'>{eq_text}</h2></div>", unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
     
-    # 그래프 표시
+    # 그래프 표시 (모드바 제거)
     fig_right = create_graph_plot(st.session_state.right_equation)
-    st.plotly_chart(fig_right, use_container_width=True)
+    config = {
+        'displayModeBar': False,  # 모드바 완전히 숨김
+        'displaylogo': False
+    }
+    st.plotly_chart(fig_right, use_container_width=True, config=config)
     st.info("그래프를 보고 방정식을 찾아보세요!")
     
     # 입력
